@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure Advanced Management Portal | Gourav Singh Bhadoriya</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --azure-blue: #0078d4;
+            --dark-bg: #1b1b1b;
+            --sidebar-width: 260px;
+            --success: #107c10;
+            --danger: #a4262c;
+            --warning: #ffaa44;
+            --card-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: #f3f2f1; display: flex; overflow: hidden; }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--dark-bg);
+            color: white;
+            position: fixed;
+            transition: 0.3s;
+            z-index: 1000;
+        }
+        .sidebar-brand { 
+            padding: 25px 20px; 
+            font-size: 1.2rem; 
+            font-weight: 600; 
+            border-bottom: 1px solid #333;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--azure-blue);
+        }
+        .sidebar-menu { list-style: none; padding: 15px 0; margin: 0; }
+        .sidebar-menu li { 
+            padding: 12px 25px; 
+            cursor: pointer; 
+            transition: 0.2s; 
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 0.95rem;
+            color: #ccc;
+        }
+        .sidebar-menu li:hover, .sidebar-menu li.active { 
+            background: #333; 
+            color: white;
+            border-left: 4px solid var(--azure-blue);
+        }
+        .sidebar-menu li i { width: 20px; text-align: center; }
+
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+            height: 100vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .navbar {
+            background: white;
+            padding: 0 30px;
+            height: 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+        .search-bar input {
+            padding: 8px 15px;
+            width: 350px;
+            border: 1px solid #ddd;
+            border-radius: 2px;
+            background: #f8f9fa;
+        }
+        .user-profile { display: flex; align-items: center; gap: 15px; font-size: 0.9rem; }
+        .btn-logout { 
+            background: var(--danger); color: white; padding: 6px 12px; 
+            text-decoration: none; border-radius: 2px; font-weight: 500; font-size: 0.85rem;
+        }
+
+        /* Page Content Sections */
+        .page-section { display: none; padding: 30px; animation: fadeIn 0.4s ease; }
+        .page-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white; padding: 20px; border-radius: 4px;
+            box-shadow: var(--card-shadow);
+            border-top: 4px solid var(--azure-blue);
+        }
+        .stat-card h4 { margin: 0; color: #666; font-size: 0.85rem; text-transform: uppercase; }
+        .stat-card .value { font-size: 1.8rem; font-weight: 700; margin: 15px 0 5px; color: #333; }
+        .stat-card .trend { font-size: 0.8rem; color: var(--success); }
+
+        /* Tables & Lists */
+        .data-card {
+            background: white; padding: 25px; border-radius: 4px;
+            box-shadow: var(--card-shadow);
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { text-align: left; padding: 14px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+        th { background: #faf9f8; font-weight: 600; color: #323130; }
+        
+        .status-pill {
+            padding: 3px 10px; border-radius: 12px; font-size: 11px;
+            font-weight: 600; color: white; display: inline-block;
+        }
+        .bg-running { background: var(--success); }
+        .bg-stopped { background: var(--danger); }
+        .bg-warning { background: var(--warning); }
+
+        /* Action Buttons */
+        .btn-action {
+            background: var(--azure-blue); color: white; border: none;
+            padding: 8px 16px; border-radius: 2px; cursor: pointer;
+            font-weight: 500; transition: 0.2s;
+        }
+        .btn-action:hover { opacity: 0.9; }
+
+        /* Settings Form */
+        .settings-form { max-width: 600px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; }
+        .form-group input, .form-group select { 
+            width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;
+        }
+
+        /* Modal Simulation */
+        #notification {
+            position: fixed; top: 20px; right: 20px;
+            padding: 15px 25px; background: #333; color: white;
+            border-radius: 4px; display: none; z-index: 2000;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="notification">Action Completed Successfully!</div>
+
+    <div class="sidebar">
+        <div class="sidebar-brand">
+            <i class="fab fa-microsoft"></i> <span>Azure Portal</span>
+        </div>
+        <ul class="sidebar-menu">
+            <li class="active" onclick="showSection('overview', this)"><i class="fas fa-chart-line"></i> Overview</li>
+            <li onclick="showSection('vms', this)"><i class="fas fa-server"></i> Virtual Machines</li>
+            <li onclick="showSection('databases', this)"><i class="fas fa-database"></i> SQL Databases</li>
+            <li onclick="showSection('storage', this)"><i class="fas fa-hdd"></i> Storage Accounts</li>
+            <li onclick="showSection('security', this)"><i class="fas fa-shield-alt"></i> Security Center</li>
+            <li onclick="showSection('settings', this)"><i class="fas fa-cog"></i> Settings</li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="navbar">
+            <div class="search-bar">
+                <input type="text" placeholder="Search resources, services, and docs (Gourav's Cloud)...">
+            </div>
+            <div class="user-profile">
+                <span id="nav-user-name">Welcome, <strong>Gourav Singh Bhadoriya</strong></span>
+                <img src="https://ui-avatars.com/api/?name=Gourav+Singh&background=0078d4&color=fff" style="width:32px; border-radius:50%;" alt="User">
+                <a href="/" class="btn-logout" onclick="return confirm('Gourav, kya aap sach mein logout karna chahte hain?')">Logout</a>
+            </div>
+        </div>
+
+        <div id="overview" class="page-section active">
+            <h2>Dashboard Overview</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h4>Total Spend (MTD)</h4>
+                    <div class="value">₹12,450.00</div>
+                    <div class="trend"><i class="fas fa-arrow-down"></i> 2.4% from last month</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Resource Health</h4>
+                    <div class="value">99.9%</div>
+                    <div class="trend">All systems operational</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Security Score</h4>
+                    <div class="value">84/100</div>
+                    <div class="trend" style="color:var(--warning)">Action recommended</div>
+                </div>
+            </div>
+            <div class="data-card">
+                <h3>Recent Activity</h3>
+                <table id="activity-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Resource</th>
+                            <th>Action</th>
+                            <th>User</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Just now</td><td>VM-Prod-01</td><td>Start Instance</td><td>Gourav S.</td></tr>
+                        <tr><td>2 hours ago</td><td>SQL-Core-DB</td><td>Backup Completed</td><td>System</td></tr>
+                        <tr><td>5 hours ago</td><td>Security-Group-A</td><td>Rule Modified</td><td>Admin</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="vms" class="page-section">
+            <div style="display:flex; justify-content: space-between; align-items:center">
+                <h2>Virtual Machines</h2>
+                <button class="btn-action" onclick="showToast('Creating New VM instance...')">+ Create VM</button>
+            </div>
+            <div class="data-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Size</th>
+                            <th>Public IP</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>VM-Web-Server</strong></td>
+                            <td>Standard D2s v3</td>
+                            <td>20.45.128.31</td>
+                            <td><span class="status-pill bg-running">Running</span></td>
+                            <td><button onclick="showToast('Restarting VM...')">Restart</button></td>
+                        </tr>
+                        <tr>
+                            <td><strong>VM-Dev-Box</strong></td>
+                            <td>Standard B1s</td>
+                            <td>13.67.201.12</td>
+                            <td><span class="status-pill bg-stopped">Stopped</span></td>
+                            <td><button onclick="showToast('Starting VM...')">Start</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="databases" class="page-section">
+            <h2>SQL Databases</h2>
+            <div class="data-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>DB Name</th>
+                            <th>Server</th>
+                            <th>Pricing Tier</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Gourav_Project_DB</strong></td>
+                            <td>sql-prod-server</td>
+                            <td>General Purpose (S0)</td>
+                            <td><span class="status-pill bg-running">Online</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Auth_Logs_DB</strong></td>
+                            <td>sql-prod-server</td>
+                            <td>Basic</td>
+                            <td><span class="status-pill bg-running">Online</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="settings" class="page-section">
+            <h2>Portal Settings</h2>
+            <div class="data-card settings-form">
+                <div class="form-group">
+                    <label>Display Name</label>
+                    <input type="text" id="username-input" value="Gourav Singh Bhadoriya">
+                </div>
+                <div class="form-group">
+                    <label>Default Region</label>
+                    <select>
+                        <option>Central India (Pune)</option>
+                        <option>East US</option>
+                        <option>West Europe</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Dark Mode</label>
+                    <input type="checkbox" style="width:auto"> Enable Preview
+                </div>
+                <button class="btn-action" onclick="saveSettings()">Save Configuration</button>
+            </div>
+        </div>
+
+        <div id="storage" class="page-section"><h2>Storage Accounts</h2><p>Managing Blob, File, and Queue storage...</p></div>
+        <div id="security" class="page-section"><h2>Security Center</h2><p>Monitoring threats and compliance...</p></div>
+
+        <div class="footer">
+            &copy; 2026 Gourav's Enterprise Cloud Management Portal | Secure Session Active
+        </div>
+    </div>
+
+    <script>
+        // Section Navigation Logic
+        function showSection(sectionId, element) {
+            // Hide all sections
+            const sections = document.querySelectorAll('.page-section');
+            sections.forEach(s => s.classList.remove('active'));
+            
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Update Sidebar Menu UI
+            const menuItems = document.querySelectorAll('.sidebar-menu li');
+            menuItems.forEach(item => item.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        // Notification System
+        function showToast(message) {
+            const toast = document.getElementById('notification');
+            toast.innerText = message;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        // Settings Save Logic
+        function saveSettings() {
+            const newName = document.getElementById('username-input').value;
+            document.getElementById('nav-user-name').innerHTML = `Welcome, <strong>${newName}</strong>`;
+            showToast("Settings Updated Successfully!");
+        }
+
+        // Security: Redirect to index if refreshed (as requested)
+        if (performance.navigation.type === 1) {
+            window.location.href = "/";
+        }
+    </script>
+   <div id="settings" class="page-section">
+    <h2>Portal Settings</h2>
+    <div class="data-card settings-form">
+        <div class="form-group">
+            <label>Display Name</label>
+            <input type="text" id="username-input" value="Gaurav Singh Simodaria">
+        </div>
+        <div class="form-group">
+            <label>Default Region</label>
+            <select>
+                <option>Central India (Pune)</option>
+                <option>East US</option>
+                <option>West Europe</option>
+            </select>
+        </div>
+        
+        <div class="form-group" style="display: flex; align-items: center; gap: 12px; background: #eef2f3; padding: 15px; border-radius: 10px; border: 1px solid #ddd;">
+    <input type="checkbox" id="dark-mode-toggle" style="width:22px; height:22px; cursor:pointer;" onclick="applyDarkMode()"> 
+    <label style="margin: 0; cursor: pointer; font-weight: bold; color: #333;"> 
+        Enable Dark Mode (Advanced Preview)
+    </label>
+        </div>
+        <br>
+        <button class="btn-action" onclick="saveSettings()">Save Configuration</button>
+    </div>
+</div>
+
+<script>
+    // 1. Dark Mode Toggle Logic (On/Off Dono Ke Liye)
+    function applyDarkMode() {
+        const checkbox = document.getElementById('dark-mode-toggle');
+        const body = document.body;
+        
+        if (checkbox.checked) {
+            body.setAttribute('data-theme', 'dark');
+            localStorage.setItem('azureTheme', 'dark');
+            if (typeof showToast === "function") showToast("Dark Mode: Enabled");
+        } else {
+            body.removeAttribute('data-theme');
+            localStorage.setItem('azureTheme', 'light');
+            if (typeof showToast === "function") showToast("Dark Mode: Disabled");
+        }
+    }
+
+    // 2. CSS Styles (Jo Background aur Text badlega)
+    const styleSheet = document.createElement('style');
+    styleSheet.innerHTML = `
+        [data-theme="dark"] { background-color: #0d1117 !important; color: #c9d1d9 !important; }
+        [data-theme="dark"] .navbar, 
+        [data-theme="dark"] .stat-card, 
+        [data-theme="dark"] .data-card,
+        [data-theme="dark"] th { background-color: #161b22 !important; color: #f0f6fc !important; border-color: #30363d !important; }
+        [data-theme="dark"] .sidebar { background-color: #010409 !important; border-right: 1px solid #30363d; }
+        [data-theme="dark"] td { color: #8b949e !important; border-bottom: 1px solid #21262d !important; }
+        [data-theme="dark"] input, [data-theme="dark"] select { background-color: #0d1117 !important; color: white !important; border: 1px solid #30363d !important; }
+        [data-theme="dark"] .sidebar-menu li:hover { background: #21262d !important; }
+        [data-theme="dark"] h2 { color: #58a6ff !important; }
+    `;
+    document.head.appendChild(styleSheet);
+
+    // 3. Page Load Settings
+    window.addEventListener('DOMContentLoaded', (event) => {
+        const savedTheme = localStorage.getItem('azureTheme');
+        const checkbox = document.getElementById('dark-mode-toggle');
+        if (savedTheme === 'dark') {
+            document.body.setAttribute('data-theme', 'dark');
+            if(checkbox) checkbox.checked = true;
+        }
+    });
+
+    // Puraane Save Function ko support karne ke liye
+    function saveSettings() {
+        const newName = document.getElementById('username-input').value;
+        if (typeof showToast === "function") showToast("Settings saved for " + newName);
+    }
+</script>`1
+</body>
+</html>

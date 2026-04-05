@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Azure Node | Secure Access</title>
+    <style>
+        body {
+            margin: 0; font-family: 'Segoe UI', sans-serif;
+            background: #020617; /* Deep Black/Blue Background */
+            height: 100vh; display: flex; justify-content: center; align-items: center;
+            overflow: hidden; color: white;
+        }
+        /* Glowing Glass Effect Card */
+        .login-card {
+            background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(15px);
+            padding: 50px; border-radius: 25px; width: 400px;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            box-shadow: 0 0 50px rgba(0,0,0,0.8), 0 0 20px rgba(56, 189, 248, 0.1);
+            text-align: center; position: relative;
+        }
+        h2 { color: #38bdf8; font-size: 2rem; margin-bottom: 30px; letter-spacing: 2px; }
+        input {
+            width: 100%; padding: 15px; margin-bottom: 20px;
+            background: rgba(15, 23, 42, 0.8); border: 1px solid #334155;
+            border-radius: 12px; color: white; outline: none; font-size: 1rem;
+            box-sizing: border-box; transition: 0.3s;
+        }
+        input:focus { border-color: #38bdf8; box-shadow: 0 0 10px rgba(56, 189, 248, 0.3); }
+        .btn {
+            width: 100%; padding: 15px; background: #0284c7; border: none;
+            border-radius: 12px; color: white; font-weight: bold; cursor: pointer;
+            font-size: 1.1rem; transition: 0.3s;
+        }
+        .btn:hover { background: #0ea5e9; transform: translateY(-2px); }
+        #otp-section { display: none; margin-top: 20px; border-top: 1px solid #334155; padding-top: 20px; }
+        .footer-links { display: flex; justify-content: space-between; margin-top: 25px; font-size: 12px; }
+        .footer-links a { color: #94a3b8; text-decoration: none; cursor: pointer; }
+        .footer-links a:hover { color: #38bdf8; }
+        .signature { position: absolute; bottom: -60px; left: 0; width: 100%; display: flex; justify-content: space-between; font-size: 10px; opacity: 0.5; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h2>SECURE LOGIN</h2>
+        <div id="login-fields">
+            <input type="text" id="userid" placeholder="Administrator Identity">
+            <input type="password" id="userpass" placeholder="Access Key">
+            <button class="btn" onclick="requestAuth()">Enter</button>
+        </div>
+
+        <div id="otp-section">
+            <p style="color: #38bdf8; margin-bottom: 15px;">Security Token Required</p>
+            <input type="text" id="otp-input" placeholder="000000" maxlength="6" style="text-align: center; letter-spacing: 8px; font-size: 22px;">
+            <button class="btn" onclick="verifyAuth()" style="background: #059669;">AUTHORIZE SESSION</button>
+        </div>
+
+        <div class="footer-links">
+            <a onclick="alert('Contact Master Admin: gsbhadoriya4@gmail.com')">FORGOT KEY?</a>
+            <a onclick="alert('Support: +91 62630 83976')">ADMIN SUPPORT</a>
+        </div>
+        <div class="signature">
+            <span>BY GOURAV SINGH BHADORIYA</span>
+            <span>gsbhadoriya4@gmail.com</span>
+        </div>
+    </div>
+
+    <script>
+        function requestAuth() {
+            const id = document.getElementById('userid').value;
+            const pass = document.getElementById('userpass').value;
+
+            fetch('/authenticate', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id: id, pass: pass})
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    alert("🔑 SECURITY CODE GENERATED: " + data.otp);
+                    document.getElementById('login-fields').style.display = 'none';
+                    document.getElementById('otp-section').style.display = 'block';
+                } else {
+                    alert("❌ ACCESS DENIED: Incorrect ID or Key.");
+                }
+            })
+            .catch(err => alert("Server connection failed!"));
+        }
+
+        function verifyAuth() {
+            const otp = document.getElementById('otp-input').value;
+            fetch('/verify_otp', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({otp: otp})
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    window.location.href = data.redirect;
+                } else {
+                    alert("❌ INVALID SECURITY TOKEN.");
+                }
+            });
+        }
+    </script>
+    <script>
+    // Ye rahi wo refresh wali line
+    if (performance.navigation.type === 1) { 
+        window.location.href = "/"; 
+    }
+
+    // Iske niche tumhara baaki puraana function (sendAuth wala) rahega
+    function sendAuth() { 
+        // ... baaki code ...
+    }
+</script>
+</body>
+</html>
